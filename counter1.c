@@ -12,8 +12,8 @@
 
 /* program elektrownia atomowa*/
 int threads=1024;
-int temperatura=1;
-int cool_nr=1;
+int counter1=1;
+#
 int sleep_time=1000;
 time_t zegar2;
 pthread_cond_t warunek = PTHREAD_COND_INITIALIZER;
