@@ -16,7 +16,6 @@ int counter1_start=1;
 int counter1_stop=1000000;
 int counter1_warn=200000;
 
-int counter1=0;
 
 int sleep_time=1000;
 
@@ -43,10 +42,12 @@ void* counter_in(void *arg)
 {
   for(;;)
     {
+      //printf("counter increase- for;;!\n");
       pthread_mutex_lock(&mutex1);
+      //      printf("counter increase- mutex locked!\n");
       counter1++;
       pthread_mutex_unlock(&mutex1);
-      usleep(500);
+      usleep(50);
     }
   return NULL;
 }
@@ -55,105 +56,83 @@ void* manager(void *arg)
 {
   for(;;) /* Petla nieskonczona */
     {
+      
+      printf("manager! \n");
       pthread_mutex_lock(&mutex1);
       if ( counter1>=counter1_warn ) 
 	{
 	    pthread_cond_signal(&warunek1); 
 	}
       pthread_mutex_unlock(&mutex1);
+      sleep(2);
     }
     return NULL;
 }
 
-void* counter_de(void *arg);
+void* counter_de(void *arg)
 {
+  
+  //printf ("%s\t\n",(char[]) arg);
+  pthread_mutex_lock(&mutex1);
   for(;;)
     {
-      pthread_mutex_lock(&mutex1);
-      
+      pthread_cond_wait(&warunek1 ,&mutex1); 
+      counter1--;
+      usleep(500);
     }
-
+  pthread_mutex_unlock(&mutex1);
+  return NULL;
 }
 
-
-
-void* worker(void *arg)
+void* klawiatura1()
 {
-    int i;
-    //printf("COOLING READY, skutecznosc chl.:%d (a+, z-)\t, opor przepl.:%d (s+, x-)\n",cool_nr,sleep_time);
-    printf("COOLING READY:\t%d\n",(int)pthread_self());
-    for(;;) /* Petla nieskonczon/a */
-    {
-
-	pthread_cond_wait(&warunek ,&mutex); /* Czekaj na sygnal od zarzadcy */
-		//printf("%d: ",pthread_self());
-		for(i=0;i<cool_nr;i++)
-		{
-			pthread_mutex_trylock(&mutex);   
-			    temperatura--;
-			printf(".:%d:.",(int)pthread_self());
-			pthread_mutex_unlock(&mutex);
-		//	pthread_yield();
-		usleep(sleep_time);
-		}
-
-		printf("\n");
-    }
-    return NULL;
-}
-void * klawiatura1()
-{
-    printf("keyboard active!\n");
-    sleep(5);
+  printf("keyboard active!\n");
+  sleep(1);
   int k = 0;
   for(;;)
     {
     /*  k=getchar(); */ /* getch() */
     k=getch();	      
-      if (k==120) {
-	sleep_time--;
-      }
-      if (k==115) {
-	sleep_time++;
-      }
-      if (k==97) {
-	cool_nr++;
-      }
-      if (k==122) {
-	cool_nr--;
-      }
-      k=0;
-      
+    if (k==120) {
+      //sleep_time--;
+    }
+    if (k==115) {
+      //sleep_time++;
+    }
+    if (k==97) {
+      //cool_nr++;
+      printf("c1:\t%d\n",counter1);
+    }
+    if (k==122) {
+      //cool_nr--;
+    }
+    k=0;
     }
 }
 
 int main(int argc, char* argv[])
 {
-    printf("wątków:\t%d\n",threads);
-    sleep(1);
+  counter1=counter1_start;
+  pthread_t workers[threads_max];	/* ident. procesów dekrease */
+  pthread_t counter;                  /* ident. procesu increase */
+  pthread_attr_t attr;  		/* atrybuty watku */
+  pthread_t klawiatura;		/* identyfikator Wątku obsługującego klawiaturę*/
+  pthread_attr_init( &attr );		/* inicjalizuj strukture z atrybutami*/
+  pthread_create(&klawiatura,NULL,klawiatura1,NULL);
+  char str[4];
+  int i=0;
+  for (i=0;i<threads_max;i++)
+    {
+      sprintf (str,"%d",i);
+      //pthread_create(&workers[i], &attr, counter_de,str);	/* Tworzymy watki-wykonawcow */
+    }
+  printf("counter_de: %d\n",i);
 
-    pthread_t workers[threads];		/* identyfikatory wątków - wykonawców */
-    pthread_attr_t attr;  		/* atrybuty watku */
-    pthread_t klawiatura;		/* identyfikator Wątku obsługującego klawiaturę*/
-    pthread_attr_init( &attr );		/* inicjalizuj strukture z atrybutami*/
+  pthread_create(&counter, &attr, counter_in, NULL);	/* Tworzymy watki-wykonawcow */
+  manager(NULL);						/* Sam realizuj zadanie zarzadcy*/
+  
 
-    pthread_create(&klawiatura,NULL,klawiatura1,NULL);
-    printf("keyboard create process ends\n");
-    sleep(1);
-    char str[4];
-    int i=0;
-
-    for (i=0;i<threads;i++)
-	{
-	    sprintf (str,"%d",i);
-	    pthread_create(&workers[i], &attr, worker,str);	/* Tworzymy watki-wykonawcow */
-	    printf ("stworzono wątek nr:\t%s\n",str);
-	}
-
-    manager(NULL);						/* Sam realizuj zadanie zarzadcy*/
-
-    
-    for (i=0;i<threads;i++)
+  for (i=0;i<threads;i++)
 	{
 	    pthread_join(workers[i], NULL);			/* Czekaj na zakonczenie watkow - wykonawcow */
 	}
