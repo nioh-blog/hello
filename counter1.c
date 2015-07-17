@@ -9,10 +9,10 @@
 
 /* program liczenie1*/
 int threads=1024;
-int threads_max=200;
+int threads_max=20;
 
 int counter1=0;
-int counter1_start=100000;
+int counter1_start=180000;
 int counter1_stop=1000000;
 int counter1_warn=200000;
 int counter_de_nr=0;// liczyć będziemy tworzone /pracujące/ wątki
@@ -20,6 +20,7 @@ int counter_de_nr=0;// liczyć będziemy tworzone /pracujące/ wątki
 int sleep_time=750;
 
 pthread_cond_t warunek1 = PTHREAD_COND_INITIALIZER;
+//pthread_cond_t warunek2 = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
 /* dziwny kod zwiazany z enterem*/
@@ -44,7 +45,7 @@ void* counter_in(void *arg)
     {
       //printf("counter increase- for;;!\n");
       pthread_mutex_lock(&mutex1);
-      printf("+");
+      //printf("+");
       counter1++;
       pthread_mutex_unlock(&mutex1);
       usleep(900);
@@ -73,10 +74,12 @@ void* manager(void *arg)
 void* counter_de(void *arg)
 {
   int k=0;
+  //int *t = (int)*arg;
   pthread_mutex_lock(&mutex2);
   counter_de_nr++;
   pthread_mutex_unlock(&mutex2);
   //printf ("%s\t\n",(char[]) arg);
+  
   //pthread_mutex_lock(&mutex1);
   for(;;)
     {
@@ -84,7 +87,9 @@ void* counter_de(void *arg)
       pthread_cond_wait(&warunek1 ,&mutex1);
       //printf("%ld:\t%d\n",pthread_self(),counter1);
       //for (k=0;k<=1000;k++)
-      printf("-");
+      //printf("-");
+      printf ("%s\t",arg);
+      //printf("%d\t",t);
       counter1--;
       pthread_mutex_unlock(&mutex1);
       usleep(50);
@@ -92,11 +97,11 @@ void* counter_de(void *arg)
   return NULL;
 }
 
-void* klawiatura1()
+void* klawiatura1(void *w)
 {
   printf("keyboard active!\n");
   sleep(1);
-  int k = 0;
+  int k,i = 0;
   for(;;)
     {
     /*  k=getchar(); */ /* getch() */
@@ -114,6 +119,9 @@ void* klawiatura1()
     if (k==122) {
       //cool_nr--;
       printf("\n\n\ncounter_de_nr:\t%d\n",counter_de_nr);
+      for (i=0;i<threads_max;i++)
+	printf("%d\t",&w+i);
+      printf("\n\n");
     }
     k=0;
     }
@@ -127,13 +135,14 @@ int main(int argc, char* argv[])
   pthread_attr_t attr;  		/* atrybuty watku */
   pthread_t klawiatura;		/* identyfikator Wątku obsługującego klawiaturę*/
   pthread_attr_init( &attr );		/* inicjalizuj strukture z atrybutami*/
-  pthread_create(&klawiatura,NULL,klawiatura1,NULL);
+  pthread_create(&klawiatura,NULL,klawiatura1,(void*)workers);
   char str[4];
   int i=0;
   for (i=0;i<threads_max;i++)
     {
       sprintf (str,"%d",i);
       pthread_create(&workers[i], &attr, counter_de,str);	/* Tworzymy watki-wykonawcow */
+      sprintf (str,"%s","....");
     }
   printf("counter_de: %d\n",i);
 
