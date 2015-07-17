@@ -7,17 +7,21 @@
 #include <unistd.h>
 #include <termios.h>
 
-
-
-
-/* program elektrownia atomowa*/
+/* program liczenie1*/
 int threads=1024;
-int counter1=1;
-#
+int threads_max=1024;
+
+int counter1=0;
+int counter1_start=1;
+int counter1_stop=1000000;
+int counter1_warn=200000;
+
+int counter1=0;
+
 int sleep_time=1000;
-time_t zegar2;
-pthread_cond_t warunek = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+pthread_cond_t warunek1 = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 
 /* dziwny kod zwiazany z enterem*/
 int getch (void)
@@ -35,28 +39,44 @@ int getch (void)
 }
 /* koniec */
 
+void* counter_in(void *arg)
+{
+  for(;;)
+    {
+      pthread_mutex_lock(&mutex1);
+      counter1++;
+      pthread_mutex_unlock(&mutex1);
+      usleep(500);
+    }
+  return NULL;
+}
 
 void* manager(void *arg)
 {
-    for(;;) /* Petla nieskonczona */
+  for(;;) /* Petla nieskonczona */
     {
-	usleep(1000);
-	pthread_mutex_lock(&mutex);
-		temperatura++;
-		temperatura++;
-        pthread_mutex_unlock(&mutex);
-	//printf("#%d#",temperatura);
-        //printf("Manager: temp:%d\tskutecznosc:%d\topor:%d\t\n",temperatura,cool_nr,sleep_time);
-	if (temperatura>=10) 
+      pthread_mutex_lock(&mutex1);
+      if ( counter1>=counter1_warn ) 
 	{
-	    printf ("\t!\t");
-	    pthread_cond_signal(&warunek); 
+	    pthread_cond_signal(&warunek1); 
 	}
+      pthread_mutex_unlock(&mutex1);
     }
     return NULL;
 }
 
-  /* Watek - wykonawca */
+void* counter_de(void *arg);
+{
+  for(;;)
+    {
+      pthread_mutex_lock(&mutex1);
+      
+    }
+
+}
+
+
+
 void* worker(void *arg)
 {
     int i;
