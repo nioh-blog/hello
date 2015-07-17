@@ -9,19 +9,19 @@
 
 /* program liczenie1*/
 int threads=1024;
-int threads_max=1024;
+int threads_max=200;
 
 int counter1=0;
-int counter1_start=1;
+int counter1_start=100000;
 int counter1_stop=1000000;
 int counter1_warn=200000;
+int counter_de_nr=0;// liczyć będziemy tworzone /pracujące/ wątki
 
-
-int sleep_time=1000;
+int sleep_time=750;
 
 pthread_cond_t warunek1 = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
-
+pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
 /* dziwny kod zwiazany z enterem*/
 int getch (void)
 {
@@ -44,10 +44,10 @@ void* counter_in(void *arg)
     {
       //printf("counter increase- for;;!\n");
       pthread_mutex_lock(&mutex1);
-      //      printf("counter increase- mutex locked!\n");
+      //printf("+");
       counter1++;
       pthread_mutex_unlock(&mutex1);
-      usleep(50);
+      usleep(900);
     }
   return NULL;
 }
@@ -56,31 +56,39 @@ void* manager(void *arg)
 {
   for(;;) /* Petla nieskonczona */
     {
-      
-      printf("manager! \n");
-      pthread_mutex_lock(&mutex1);
+      printf("sleep_time:%d\tcounter1:%d\n",sleep_time,counter1);
+      //printf("manager! \n");
+      //pthread_mutex_lock(&mutex1);
       if ( counter1>=counter1_warn ) 
 	{
-	    pthread_cond_signal(&warunek1); 
+	    pthread_cond_signal(&warunek1);
+	    //printf("manager cond signal! \n"); 
 	}
-      pthread_mutex_unlock(&mutex1);
-      sleep(2);
+      //pthread_mutex_unlock(&mutex1);
+      usleep(sleep_time);
     }
     return NULL;
 }
 
 void* counter_de(void *arg)
 {
-  
+  int k=0;
+  pthread_mutex_lock(&mutex2);
+  counter_de_nr++;
+  pthread_mutex_unlock(&mutex2);
   //printf ("%s\t\n",(char[]) arg);
-  pthread_mutex_lock(&mutex1);
+  //pthread_mutex_lock(&mutex1);
   for(;;)
     {
-      pthread_cond_wait(&warunek1 ,&mutex1); 
+      pthread_mutex_lock(&mutex1);
+      pthread_cond_wait(&warunek1 ,&mutex1);
+      //printf("%ld:\t%d\n",pthread_self(),counter1);
+      //for (k=0;k<=1000;k++)
+      printf("-");
       counter1--;
-      usleep(500);
+      pthread_mutex_unlock(&mutex1);
+      usleep(50);
     }
-  pthread_mutex_unlock(&mutex1);
   return NULL;
 }
 
@@ -94,10 +102,10 @@ void* klawiatura1()
     /*  k=getchar(); */ /* getch() */
     k=getch();	      
     if (k==120) {
-      //sleep_time--;
+      sleep_time=sleep_time-10;
     }
     if (k==115) {
-      //sleep_time++;
+      sleep_time=sleep_time+10;
     }
     if (k==97) {
       //cool_nr++;
@@ -105,6 +113,7 @@ void* klawiatura1()
     }
     if (k==122) {
       //cool_nr--;
+      printf("counter_de_nr:\t%d\n",counter_de_nr);
     }
     k=0;
     }
@@ -124,7 +133,7 @@ int main(int argc, char* argv[])
   for (i=0;i<threads_max;i++)
     {
       sprintf (str,"%d",i);
-      //pthread_create(&workers[i], &attr, counter_de,str);	/* Tworzymy watki-wykonawcow */
+      pthread_create(&workers[i], &attr, counter_de,str);	/* Tworzymy watki-wykonawcow */
     }
   printf("counter_de: %d\n",i);
 
