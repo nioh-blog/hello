@@ -9,7 +9,7 @@
 
 /* program liczenie1*/
 int threads=1024;
-int threads_max=20;
+int threads_max=240;
 
 int counter1=0;
 int counter1_start=180000;
@@ -18,6 +18,8 @@ int counter1_warn=200000;
 int counter_de_nr=0;// liczyć będziemy tworzone /pracujące/ wątki
 
 int sleep_time=750;
+
+int *ile_watk;
 
 pthread_cond_t warunek1 = PTHREAD_COND_INITIALIZER;
 //pthread_cond_t warunek2 = PTHREAD_COND_INITIALIZER;
@@ -74,22 +76,21 @@ void* manager(void *arg)
 void* counter_de(void *arg)
 {
   int k=0;
-  //int *t = (int)*arg;
+  char t;
+  t = *((int*) arg);
   pthread_mutex_lock(&mutex2);
   counter_de_nr++;
   pthread_mutex_unlock(&mutex2);
   //printf ("%s\t\n",(char[]) arg);
-  
+  printf("\n");
   //pthread_mutex_lock(&mutex1);
   for(;;)
     {
       pthread_mutex_lock(&mutex1);
       pthread_cond_wait(&warunek1 ,&mutex1);
       //printf("%ld:\t%d\n",pthread_self(),counter1);
-      //for (k=0;k<=1000;k++)
-      //printf("-");
-      printf ("%s\t",arg);
-      //printf("%d\t",t);
+      //printf ("%d\t",t);
+      
       counter1--;
       pthread_mutex_unlock(&mutex1);
       usleep(50);
@@ -120,7 +121,11 @@ void* klawiatura1(void *w)
       //cool_nr--;
       printf("\n\n\ncounter_de_nr:\t%d\n",counter_de_nr);
       for (i=0;i<threads_max;i++)
-	printf("%d\t",&w+i);
+	{
+	  printf("%d\t%d",&w+i);
+	  //printf("%d ",i);
+	}
+      
       printf("\n\n");
     }
     k=0;
@@ -136,16 +141,22 @@ int main(int argc, char* argv[])
   pthread_t klawiatura;		/* identyfikator Wątku obsługującego klawiaturę*/
   pthread_attr_init( &attr );		/* inicjalizuj strukture z atrybutami*/
   pthread_create(&klawiatura,NULL,klawiatura1,(void*)workers);
-  char str[4];
+  char str1[4];
+  int str2[threads_max];
   int i=0;
   for (i=0;i<threads_max;i++)
     {
-      sprintf (str,"%d",i);
-      pthread_create(&workers[i], &attr, counter_de,str);	/* Tworzymy watki-wykonawcow */
-      sprintf (str,"%s","....");
+      //sprintf (str1,"%d",i);
+      str2[i]=i;
+      pthread_create(&workers[i], &attr, counter_de,&str2[i]);	/* Tworzymy watki-wykonawcow */
+      //sprintf (str,"%s","....");
     }
   printf("counter_de: %d\n",i);
+  for (i=0;i<threads_max;i++)
+    printf("%d\t",workers[i]);
 
+
+  ile_watk=&i;
   pthread_create(&counter, &attr, counter_in, NULL);	/* Tworzymy watki-wykonawcow */
   manager(NULL);						/* Sam realizuj zadanie zarzadcy*/
   
