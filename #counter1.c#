@@ -109,11 +109,11 @@ void* klawiatura1()
     }
     if (k==97) {
       //cool_nr++;
-      printf("\n\n\nc1:\t%d\tsleep:\t%d\n",counter1,sleep_time);
+      printf("c1:\t%d\tsleep:\t%d\n",counter1,sleep_time);
     }
     if (k==122) {
       //cool_nr--;
-      printf("\n\n\ncounter_de_nr:\t%d\n",counter_de_nr);
+      printf("counter_de_nr:\t%d\n",counter_de_nr);
     }
     k=0;
     }
