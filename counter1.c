@@ -88,7 +88,7 @@ void* counter_de(void *arg)
     {
       pthread_mutex_lock(&mutex1);
       pthread_cond_wait(&warunek1 ,&mutex1);
-      printf("proc.nr:%d pthread_self:%ld counter1:%d\t\n",t,pthread_self(),counter1);
+      printf("proc.nr:%d pthread_self:%x counter1:%d\t\n",t,pthread_self(),counter1);
       //printf ("%d\t",t);
       
       counter1--;
