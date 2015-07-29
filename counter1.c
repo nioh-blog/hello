@@ -9,7 +9,7 @@
 
 /* program liczenie1*/
 int threads=1024;
-int threads_max=240;
+int threads_max=2;
 
 int counter1=0;
 int counter1_start=180000;
@@ -88,7 +88,7 @@ void* counter_de(void *arg)
     {
       pthread_mutex_lock(&mutex1);
       pthread_cond_wait(&warunek1 ,&mutex1);
-      printf("proc.nr:%d pthread_self:%x counter1:%d\t\n",t,pthread_self(),counter1);
+      //printf("proc.nr:%d pthread_self:%lu counter1:%d\t\n",t,(unsigned)pthread_self(),counter1);
       //printf ("%d\t",t);
       
       counter1--;
@@ -100,6 +100,9 @@ void* counter_de(void *arg)
 
 void* klawiatura1(void *w)
 {
+  unsigned long int *p;
+
+  p=((unsigned long int*)w);
   printf("keyboard active!\n");
   sleep(1);
   int k,i = 0;
@@ -122,7 +125,7 @@ void* klawiatura1(void *w)
       printf("\n\n\ncounter_de_nr:\t%d\n",counter_de_nr);
       for (i=0;i<threads_max;i++)
 	{
-	  printf("%d\t%d",&w+i);
+	  printf("%lu\t",(unsigned long int)p[i]);
 	  //printf("%d ",i);
 	}
       
@@ -153,7 +156,7 @@ int main(int argc, char* argv[])
     }
   printf("counter_de: %d\n",i);
   for (i=0;i<threads_max;i++)
-    printf("%d\t",workers[i]);
+    printf("%lu\t",workers[i]);
 
 
   ile_watk=&i;
