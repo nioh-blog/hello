@@ -117,7 +117,7 @@ void* klawiatura1(void *w)
       sleep_time=sleep_time+10;
     }
     if (k==107) {
-      pthread_cancel(p[counter_de_nr-1]);
+      pthread_cancel(p[counter_de_nr-1]); //wrong!
       counter_de_nr--;
     }
     if (k==97) {
