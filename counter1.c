@@ -9,7 +9,7 @@
 
 /* program liczenie1*/
 int threads=1024;
-int threads_max=2;
+int threads_max=20;
 
 int counter1=0;
 int counter1_start=180000;
@@ -89,7 +89,7 @@ void* counter_de(void *arg)
       pthread_mutex_lock(&mutex1);
       pthread_cond_wait(&warunek1 ,&mutex1);
       //printf("proc.nr:%d pthread_self:%lu counter1:%d\t\n",t,(unsigned)pthread_self(),counter1);
-      //printf ("%d\t",t);
+      printf ("%d ",t);
       
       counter1--;
       pthread_mutex_unlock(&mutex1);
@@ -102,7 +102,7 @@ void* klawiatura1(void *w)
 {
   unsigned long int *p;
 
-  p=((unsigned long int*)w);
+  p=(unsigned long int*)w;
   printf("keyboard active!\n");
   sleep(1);
   int k,i = 0;
@@ -116,6 +116,10 @@ void* klawiatura1(void *w)
     if (k==115) {
       sleep_time=sleep_time+10;
     }
+    if (k==107) {
+      pthread_cancel(p[counter_de_nr-1]);
+      counter_de_nr--;
+    }
     if (k==97) {
       //cool_nr++;
       printf("\n\n\nc1:\t%d\tsleep:\t%d\n",counter1,sleep_time);
@@ -123,7 +127,7 @@ void* klawiatura1(void *w)
     if (k==122) {
       //cool_nr--;
       printf("\n\n\ncounter_de_nr:\t%d\n",counter_de_nr);
-      for (i=0;i<threads_max;i++)
+      for (i=0;i<counter_de_nr;i++)
 	{
 	  printf("%lu\t",(unsigned long int)p[i]);
 	  //printf("%d ",i);
