@@ -16,7 +16,7 @@ int counter1_start=180000;
 int counter1_stop=1000000;
 int counter1_warn=200000;
 int counter_de_nr=0;// liczyć będziemy tworzone /pracujące/ wątki
-
+int koniec=0;
 int sleep_time=750;
 
 int *ile_watk;
@@ -84,24 +84,30 @@ void* counter_de(void *arg)
   //printf ("%s\t\n",(char[]) arg);
   printf("\n");
   //pthread_mutex_lock(&mutex1);
-  for(;;)
+  while(koniec!=t)
     {
       pthread_mutex_lock(&mutex1);
       pthread_cond_wait(&warunek1 ,&mutex1);
       //printf("proc.nr:%d pthread_self:%lu counter1:%d\t\n",t,(unsigned)pthread_self(),counter1);
-      printf ("%d ",t);
+      	
+      //printf ("thread:%d koniec:%d\t",t,koniec);
       
       counter1--;
       pthread_mutex_unlock(&mutex1);
       usleep(50);
     }
+  printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n.............................................................................\n\n\n\n\n.%d\n",t);
+pthread_mutex_unlock(&mutex1);
+koniec=-1;
+ counter_de_nr--;
+pthread_exit(NULL);
   return NULL;
 }
 
 void* klawiatura1(void *w)
 {
   unsigned long int *p;
-
+  //int koniec=0;
   p=(unsigned long int*)w;
   printf("keyboard active!\n");
   sleep(1);
@@ -117,8 +123,10 @@ void* klawiatura1(void *w)
       sleep_time=sleep_time+10;
     }
     if (k==107) {
-      pthread_cancel(p[counter_de_nr-1]); //wrong!
-      counter_de_nr--;
+      koniec=counter_de_nr;
+      //pthread_cancel(p[counter_de_nr-1]); //wrong!
+      //if (koniec==-1)
+      //counter_de_nr--;
     }
     if (k==97) {
       //cool_nr++;
