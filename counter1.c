@@ -19,12 +19,17 @@ int counter_de_nr=0;// liczyć będziemy tworzone /pracujące/ wątki
 int koniec=0;
 int sleep_time=750;
 
+
 int *ile_watk;
 
 pthread_cond_t warunek1 = PTHREAD_COND_INITIALIZER;
 //pthread_cond_t warunek2 = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
+
+
+
+
 /* dziwny kod zwiazany z enterem*/
 int getch (void)
 {
@@ -90,11 +95,11 @@ void* counter_de(void *arg)
       pthread_cond_wait(&warunek1 ,&mutex1);
       //printf("proc.nr:%d pthread_self:%lu counter1:%d\t\n",t,(unsigned)pthread_self(),counter1);
       	
-      //printf ("thread:%d koniec:%d\t",t,koniec);
+      printf ("%d\t%d\n",t,koniec);
       
       counter1--;
       pthread_mutex_unlock(&mutex1);
-      usleep(50);
+      usleep(5000);
     }
   printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n.............................................................................\n\n\n\n\n.%d\n",t);
 pthread_mutex_unlock(&mutex1);
@@ -109,28 +114,44 @@ void* klawiatura1(void *w)
   unsigned long int *p;
   //int koniec=0;
   p=(unsigned long int*)w;
+  pthread_t *w2=(pthread_t*)w;
   printf("keyboard active!\n");
+  int str3[threads_max];
   sleep(1);
-  int k,i = 0;
+  int k=0;
+  int i=0;
   for(;;)
     {
     /*  k=getchar(); */ /* getch() */
     k=getch();	      
     if (k==120) {
       sleep_time=sleep_time-10;
+      k=0;
     }
     if (k==115) {
       sleep_time=sleep_time+10;
+      k=0;
     }
     if (k==107) {
-      koniec=counter_de_nr;
+      koniec=counter_de_nr; // press k to kill last thread
       //pthread_cancel(p[counter_de_nr-1]); //wrong!
       //if (koniec==-1)
       //counter_de_nr--;
+      k=0;
     }
+    if (k==110 && counter_de_nr<threads_max){
+      	str3[counter_de_nr]=counter_de_nr+1;
+      pthread_create(&w2[counter_de_nr], NULL, counter_de,&str3[counter_de_nr]);	/* Tworzymy watki-wykonawcow */
+      counter_de_nr++;
+      k=0;
+      
+    }
+
+
     if (k==97) {
       //cool_nr++;
       printf("\n\n\nc1:\t%d\tsleep:\t%d\n",counter1,sleep_time);
+      k=0;
     }
     if (k==122) {
       //cool_nr--;
@@ -142,6 +163,7 @@ void* klawiatura1(void *w)
 	}
       
       printf("\n\n");
+      k=0;
     }
     k=0;
     }
@@ -150,7 +172,7 @@ void* klawiatura1(void *w)
 int main(int argc, char* argv[])
 {
   counter1=counter1_start;
-  pthread_t workers[threads_max];	/* ident. procesów dekrease */
+    pthread_t workers[threads_max];	/* ident. procesów dekrease */
   pthread_t counter;                  /* ident. procesu increase */
   pthread_attr_t attr;  		/* atrybuty watku */
   pthread_t klawiatura;		/* identyfikator Wątku obsługującego klawiaturę*/
