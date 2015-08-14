@@ -95,7 +95,7 @@ void* counter_de(void *arg)
       pthread_cond_wait(&warunek1 ,&mutex1);
       //printf("proc.nr:%d pthread_self:%lu counter1:%d\t\n",t,(unsigned)pthread_self(),counter1);
       	
-      printf ("%d\t%d\n",t,koniec);
+      //      printf ("%d\t%d\n",t,koniec);
       
       counter1--;
       pthread_mutex_unlock(&mutex1);
@@ -140,11 +140,13 @@ void* klawiatura1(void *w)
       k=0;
     }
     if (k==110 && counter_de_nr<threads_max){
+      //printf("%d\t",counter_de_nr);
       	str3[counter_de_nr]=counter_de_nr+1;
       pthread_create(&w2[counter_de_nr], NULL, counter_de,&str3[counter_de_nr]);	/* Tworzymy watki-wykonawcow */
-      counter_de_nr++;
+      //      counter_de_nr++;
       k=0;
-      
+      //printf("%d\n",counter_de_nr);
+      //sleep(3);      
     }
 
 
