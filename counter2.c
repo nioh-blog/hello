@@ -10,25 +10,17 @@
 /* program liczenie1*/
 int threads=1024;
 int threads_max=40;
-
-int counter1=0;
-int counter1_start=180000;
-int counter1_stop=1000000;
-int counter1_warn=200000;
-int counter_de_nr=0;// tworzone /pracujące/ wątki
+int counter1=0; //licznik główny - rośnie-maleje
+int counter1_start=180000; // licznik główny -offset
+//int counter1_stop=1000000;
+int counter1_warn=200000; // górny limit licznika
+int counter_de_nr=0;// tworzone /pracujące/ wątki, ilość
 int koniec=0;
 int sleep_time=750;
-
-
-int *ile_watk;
-
+//int *ile_watk;
 pthread_cond_t warunek1 = PTHREAD_COND_INITIALIZER;
-
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER; //counter_de_nr
-
-
-
 
 /* dziwny kod zwiazany z enterem*/
 int getch (void)
@@ -54,7 +46,7 @@ void* counter_in(void *arg)
       pthread_mutex_lock(&mutex1);
       counter1++;
       pthread_mutex_unlock(&mutex1);
-      usleep(900);
+      usleep(1000);
     }
   return NULL;
 }
@@ -68,7 +60,7 @@ void* manager(void *arg)
       if ( counter1>=counter1_warn ) 
 	pthread_cond_signal(&warunek1);
       pthread_mutex_unlock(&mutex1);
-      usleep(900);
+      usleep(100);
     }
   return NULL;
 }
@@ -87,11 +79,10 @@ void* counter_de(void *arg)
       pthread_cond_wait(&warunek1 ,&mutex1);
       counter1--;
       pthread_mutex_unlock(&mutex1);
-      usleep(90);
+      usleep(10000);
     }
   pthread_mutex_unlock(&mutex1); //nie wiem czy potrzebne
   koniec=-1; //zmienna globalna
-
   pthread_mutex_lock(&mutex2);
   counter_de_nr--;
   pthread_mutex_unlock(&mutex2);
@@ -99,13 +90,12 @@ void* counter_de(void *arg)
   return NULL;
 }
 
-void* klawiatura1(void *w)
+void* klawiatura1(void *workers_main)
 {
-  unsigned long int *p=(unsigned long int*)w;
-  pthread_t *w2=(pthread_t*)w;
   printf("keyboard active!\n");
-  int str3[threads_max];
-  sleep(1);
+
+  pthread_t *workers_local=(pthread_t*)workers_main; //unsigned long int *p=(unsigned long int*)workers_main;
+  int threads_names[threads_max];
   int k=0;
   int i=0;
   for(;;)
@@ -113,46 +103,25 @@ void* klawiatura1(void *w)
     k=getch();	      
     if (k==120) {
       sleep_time=sleep_time-10;
-      k=0;
     }
     if (k==115) {
       sleep_time=sleep_time+10;
-      k=0;
     }
     if (k==107) {
       koniec=counter_de_nr; // press k to kill last thread
-      //pthread_cancel(p[counter_de_nr-1]); //wrong!
-      //if (koniec==-1)
-      //counter_de_nr--;
-      k=0;
-    }
+     }
     if (k==110 && counter_de_nr<threads_max){
-      //printf("%d\t",counter_de_nr);
-      	str3[counter_de_nr]=counter_de_nr+1;
-      pthread_create(&w2[counter_de_nr], NULL, counter_de,&str3[counter_de_nr]);	/* Tworzymy watki-wykonawcow */
-
-      k=0;
-      //printf("%d\n",counter_de_nr);
-      //sleep(3);      
+      threads_names[counter_de_nr]=counter_de_nr+1;
+      pthread_create(&workers_local[counter_de_nr], NULL, counter_de,&threads_names[counter_de_nr]);	/* Tworzymy watki-wykonawcow */
     }
-
-
     if (k==97) {
-      //cool_nr++;
-      printf("\n\n\nc1:\t%d\tsleep:\t%d\n",counter1,sleep_time);
-      k=0;
+      printf("\n\n\ncounter1:\t%d\tsleep_time:\t%d\n",counter1,sleep_time);
     }
     if (k==122) {
-      //cool_nr--;
       printf("\n\n\ncounter_de_nr:\t%d\n",counter_de_nr);
       for (i=0;i<counter_de_nr;i++)
-	{
-	  printf("%lu\t",(unsigned long int)p[i]);
-	  //printf("%d \n",i);
-	}
-      
+	  printf("%lu\t",(unsigned long int)workers_local[i]);
       printf("\n\n");
-      k=0;
     }
     k=0;
     }
@@ -176,7 +145,7 @@ int main(int argc, char* argv[])
   pthread_create(&manage, NULL, manager,NULL);						
   
   sleep(1000);
-
+  
   for (i=0;i<counter_de_nr;i++)
     pthread_join(workers[i], NULL);			/* Czekaj na zakonczenie watkow - wykonawcow */
 
