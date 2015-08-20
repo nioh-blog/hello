@@ -1,0 +1,42 @@
+#include <time.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+int main(void)
+{
+    time_t current_time1;
+    time_t current_time2;
+    time_t temp_time;
+   char* c_time_string;
+
+   int i=0;
+   int k=0;
+   float j;
+
+    /* Obtain current time as seconds elapsed since the Epoch. */
+    current_time1 = time(NULL);
+    
+    for (i=0;i<=1000000000;i++)
+      {
+	usleep(8000);
+	j=j+i/3;
+	//printf("%d ",time(NULL)-current_time1);
+	if ( (time(NULL)-current_time1) >= 10 )
+	  {
+	    current_time1=time(NULL);
+	    //printf(":%d:",i-k);
+	    k=i;
+	  }  
+	if ((i-k)<100)
+	  printf(":%d:",i-k);
+     
+      }
+
+
+    current_time2 = time(NULL);
+
+    
+
+    (void) printf("1T loops take: %d sec.\n",current_time2-current_time1);
+    return EXIT_SUCCESS;
+}
