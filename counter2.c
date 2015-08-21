@@ -16,7 +16,9 @@ int counter1_start=180000; // licznik główny -offset
 int counter1_warn=200000; // górny limit licznika
 int counter_de_nr=0;// tworzone /pracujące/ wątki, ilość
 int koniec=0;
-int sleep_time=750;
+int sleep_time=1000;
+int manager_cmd=0;
+int key=0;
 //int *ile_watk;
 pthread_cond_t warunek1 = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
@@ -46,7 +48,7 @@ void* counter_in(void *arg)
       pthread_mutex_lock(&mutex1);
       counter1++;
       pthread_mutex_unlock(&mutex1);
-      usleep(1000);
+      usleep(sleep_time);
     }
   return NULL;
 }
@@ -54,14 +56,59 @@ void* counter_in(void *arg)
 void* manager(void *arg)
 {
   printf("manager\n");
+  int c1=0;
+  int c2=0;
+  int first=0;
+  time_t cur_time1 = time(NULL);
+  time_t cur_time2;
   for(;;) 
     {
       pthread_mutex_lock(&mutex1);
       if ( counter1>=counter1_warn ) 
-	pthread_cond_signal(&warunek1);
+	pthread_cond_signal(&warunek1);  // to all waiting threads: wake up!
+      // mimo to nie pomaga, za szybko rośnie counter1!
+      //c1=counter1;
       pthread_mutex_unlock(&mutex1);
-      usleep(100);
+      
+      if ( first==0 )
+	  {
+	    cur_time1=time(NULL);
+	    c1=counter1;
+	    first=1;
+	  }  
+    
+
+
+      if ( (time(NULL)-cur_time1) >= 10 && first==1)
+	  {
+	    //   cur_time2=time(NULL);
+	    c2=counter1;
+	    first=0;
+	  }  
+
+      printf("after %d sec, counter change: (c2-c1):%d\tfirst:%d\tcounter1:%d\n",time(NULL)-cur_time1,c2-c1,first,counter1);
+
+      //cur_time1=time(NULL);
+
+      //pthread_mutex_unlock(&mutex1);
+      usleep(10000);
     }
+
+  /*
+	if ( (time(NULL)-current_time1) >= 10 )
+	  {
+	    current_time1=time(NULL);
+	    //printf(":%d:",i-k);
+	    k=i;
+	  }  
+	if ((i-k)<100)
+	  printf(":%d:",i-k);
+	if ((i-k)>100)
+	  printf();
+  */
+
+
+
   return NULL;
 }
 
@@ -96,34 +143,36 @@ void* klawiatura1(void *workers_main)
 
   pthread_t *workers_local=(pthread_t*)workers_main; //unsigned long int *p=(unsigned long int*)workers_main;
   int threads_names[threads_max];
-  int k=0;
+  //int k=0;
   int i=0;
   for(;;)
     {
-    k=getch();	      
-    if (k==120) {
-      sleep_time=sleep_time-10;
+    if (!manager_cmd)  
+	key=getch();
+    if (key==120) {
+      sleep_time=sleep_time-100;
     }
-    if (k==115) {
-      sleep_time=sleep_time+10;
+    if (key==115) {
+      sleep_time=sleep_time+100;
     }
-    if (k==107) {
+    if (key==107) {
       koniec=counter_de_nr; // press k to kill last thread
      }
-    if (k==110 && counter_de_nr<threads_max){
+    if (key==110 && counter_de_nr<threads_max){
       threads_names[counter_de_nr]=counter_de_nr+1;
       pthread_create(&workers_local[counter_de_nr], NULL, counter_de,&threads_names[counter_de_nr]);	/* Tworzymy watki-wykonawcow */
     }
-    if (k==97) {
+    if (key==97) {
       printf("\n\n\ncounter1:\t%d\tsleep_time:\t%d\n",counter1,sleep_time);
     }
-    if (k==122) {
+    if (key==122) {
       printf("\n\n\ncounter_de_nr:\t%d\n",counter_de_nr);
       for (i=0;i<counter_de_nr;i++)
 	  printf("%lu\t",(unsigned long int)workers_local[i]);
       printf("\n\n");
     }
-    k=0;
+    key=0;
+    manager_cmd=0;
     }
 }
 
