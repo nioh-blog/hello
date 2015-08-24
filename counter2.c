@@ -73,7 +73,9 @@ void* manager(void *arg)
       if ( first==0 )
 	  {
 	    cur_time1=time(NULL);
+	  pthread_mutex_lock(&mutex1);
 	    c1=counter1;
+	    pthread_mutex_unlock(&mutex1);
 	    first=1;
 	  }  
     
@@ -82,15 +84,17 @@ void* manager(void *arg)
       if ( (time(NULL)-cur_time1) >= 10 && first==1)
 	  {
 	    //   cur_time2=time(NULL);
+pthread_mutex_lock(&mutex1);
 	    c2=counter1;
+pthread_mutex_unlock(&mutex1);
 	    first=0;
-	  }  
+	    // }  
 
-      printf("after %d sec, counter change: (c2-c1):%d\tfirst:%d\tcounter1:%d\n",time(NULL)-cur_time1,c2-c1,first,counter1);
-
+      printf("after %d sec, c1 change: (c2-c1):%d\tfirst:%d\tcounter1:%d\n",time(NULL)-cur_time1,c2-c1,first,counter1);
+	  }
       //cur_time1=time(NULL);
 
-      //pthread_mutex_unlock(&mutex1);
+      pthread_mutex_unlock(&mutex1);
       usleep(10000);
     }
 
@@ -125,8 +129,9 @@ void* counter_de(void *arg)
       pthread_mutex_lock(&mutex1);
       pthread_cond_wait(&warunek1 ,&mutex1);
       counter1--;
+      printf("%d ",t);
       pthread_mutex_unlock(&mutex1);
-      usleep(10000);
+      usleep(100);
     }
   pthread_mutex_unlock(&mutex1); //nie wiem czy potrzebne
   koniec=-1; //zmienna globalna
