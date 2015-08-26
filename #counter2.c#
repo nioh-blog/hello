@@ -91,9 +91,7 @@ void* manager(void *arg)
 		//pthread_cond_signal(&warunek1);
 		manager_cmd=1;
 		key=107;
-		putchar(107);
-		//output = fopen("/dev/tty", "w");     //open the terminal screen
-		//fputs(version,output);   
+ 
 		printf("COND_WAIT\n");
 	      }
 	  }
