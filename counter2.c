@@ -19,6 +19,7 @@ int koniec=0;
 int sleep_time=1000;
 int manager_cmd=0;
 int key=0;
+//int *konsola = fopen("/dev/tty", "w");
 //int *ile_watk;
 pthread_cond_t warunek1 = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
@@ -27,16 +28,21 @@ pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER; //counter_de_nr
 /* dziwny kod zwiazany z enterem*/
 int getch (void)
 {
-        int key;
+        int key1;
         struct termios oldSettings, newSettings;    /* stuktury z ustawieniami terminala */
  
         tcgetattr(STDIN_FILENO, &oldSettings);    /* pobranie ustawień terminala */
         newSettings = oldSettings;
         newSettings.c_lflag &= ~(ICANON | ECHO);    /* ustawienie odpowiednich flag */
         tcsetattr(STDIN_FILENO, TCSANOW, &newSettings);    /* zastosowanie ustawień */
-        key = getchar();    /* pobranie znaku ze standardowego wejścia */
+	printf("getch():manager_cmd:%d\n",manager_cmd);
+	if (manager_cmd==1){
+	  key1=107;
+	}
+	else
+	  key1 = getchar();    /* pobranie znaku ze standardowego wejścia */
         tcsetattr(STDIN_FILENO, TCSANOW, &oldSettings);    /* przywrócenie poprzednich ustawień terminala */
-        return key;
+        return key1;
 }
 /* koniec */
 
@@ -61,6 +67,7 @@ void* manager(void *arg)
   int first=0;
   time_t cur_time1 = time(NULL);
   time_t cur_time2;
+  FILE *konsola = fopen("/dev/tty", "w");
   for(;;) 
     {
       //pthread_mutex_lock(&mutex1);
@@ -85,15 +92,16 @@ void* manager(void *arg)
 	  {
 	    c2=counter1;
 	    first=0;
-	    printf("after %d sec, c1 change: (c2-c1):%d\tfirst:%d\tcounter1:%d\n",time(NULL)-cur_time1,c2-c1,first,counter1);
+	    printf("after %d sec, c1 change: (c2-c1):%d\tfirst:%d\tcounter1:%d\tcounter_de_nr:%d\n",time(NULL)-cur_time1,c2-c1,first,counter1,counter_de_nr);
 	    if ((c2-c1)<-100)
 	      {
 		//pthread_cond_signal(&warunek1);
 		manager_cmd=1;
-		key=107;
-		putchar(107);
-		//output = fopen("/dev/tty", "w");     //open the terminal screen
-		//fputs(version,output);   
+		key=getch();//107;
+		//putchar(107);
+		//konsola = fopen("/dev/tty", "w");     //open the terminal screen
+		//fputs(" ",konsola);
+		fprintf(konsola,"\n");
 		printf("COND_WAIT\n");
 	      }
 	  }
@@ -162,7 +170,7 @@ void* klawiatura1(void *workers_main)
   for(;;)
     {
       printf("key=%d\n",key);
-    if (manager_cmd==0)  
+      //if (manager_cmd==0)  
 	key=getch();
     if (key==120) {
       sleep_time=sleep_time-100;
