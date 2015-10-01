@@ -201,6 +201,7 @@ void* klawiatura1(void *workers_main)
 
 int main(int argc, char* argv[])
 {
+  printf("klawisze:a ,z ,n ,c\n");
   counter1=counter1_start;
   int i=0;
 
